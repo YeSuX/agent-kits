@@ -1,5 +1,5 @@
 import { test, expect, describe, mock, beforeEach } from 'bun:test';
-import { getModel, StringEnum, type Context, type Tool } from './index';
+import { getModel, StringEnum, type Context, type Tool, type ToolResultMessage, type UserMessage } from './index';
 import { Type } from '@sinclair/typebox';
 
 describe('getModel', () => {
@@ -72,7 +72,7 @@ describe('Context', () => {
 
     expect(context.systemPrompt).toBe('You are a helpful assistant.');
     expect(context.messages).toHaveLength(1);
-    expect(context.messages[0].role).toBe('user');
+    expect((context.messages[0] as UserMessage).role).toBe('user');
     expect(context.tools).toHaveLength(1);
   });
 
@@ -114,7 +114,7 @@ describe('Context', () => {
       ]
     };
 
-    const toolResult = context.messages[2];
+    const toolResult = context.messages[2] as ToolResultMessage;
     expect(toolResult.role).toBe('toolResult');
     expect(toolResult.toolCallId).toBe('call_123');
     expect(toolResult.isError).toBe(false);
