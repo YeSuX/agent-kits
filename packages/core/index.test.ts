@@ -174,22 +174,25 @@ describe('stream', () => {
     expect(accumulatedText.length).toBeGreaterThan(0);
   });
 
-  // test('should handle thinking events', async () => {
-  //   const s = stream(model, context);
-  //   const thinkingEvents: string[] = [];
+  // TODO: 需要处理 thinking 事件
+  test.skip('should handle thinking events', async () => {
+    const s = stream(model, context);
+    const thinkingEvents: string[] = [];
 
-  //   for await (const event of s) {
-  //     if (event.type.startsWith('thinking_')) {
-  //       thinkingEvents.push(event.type);
-  //     }
-  //   }
+    for await (const event of s) {
+      console.log('---event---', event);
+      
+      if (event.type.startsWith('thinking_')) {
+        thinkingEvents.push(event.type);
+      }
+    }
 
-  //   // 如果有 thinking，应该是 start -> delta... -> end
-  //   if (thinkingEvents.length > 0) {
-  //     expect(thinkingEvents[0]).toBe('thinking_start');
-  //     expect(thinkingEvents[thinkingEvents.length - 1]).toBe('thinking_end');
-  //   }
-  // });
+    // 如果有 thinking，应该是 start -> delta... -> end
+    if (thinkingEvents.length > 0) {
+      expect(thinkingEvents[0]).toBe('thinking_start');
+      expect(thinkingEvents[thinkingEvents.length - 1]).toBe('thinking_end');
+    }
+  });
 
   // test('should handle toolcall events', async () => {
   //   const contextWithTools: Context = {
