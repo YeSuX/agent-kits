@@ -1,4 +1,5 @@
 import { Type, type TSchema } from "@sinclair/typebox";
+import OpenAI from "openai";
 
 export interface Model {
     provider: string;
@@ -70,4 +71,148 @@ export function getModel(provider: string, modelName: string): Model {
 // StringEnum 辅助函数，用于创建字符串枚举 schema
 export function StringEnum<T extends string[]>(values: [...T]) {
     return Type.Union(values.map(v => Type.Literal(v)));
+}
+
+export interface StreamEvent {
+    type: 'start' | 'text_start' | 'text_delta' | 'text_end' |
+    'thinking_start' | 'thinking_delta' | 'thinking_end' |
+    'toolcall_start' | 'toolcall_end' | 'done' | 'error';
+    [key: string]: any;
+}
+
+export interface StreamReturn extends AsyncIterable<StreamEvent> {
+    result(): Promise<AssistantMessage & { usage: any }>;
+}
+
+export function stream(model: Model, context: Context): StreamReturn {
+    console.log('API_KEY', process.env.API_KEY);
+    console.log('BASE_URL', process.env.BASE_URL);
+
+    const openai = new OpenAI({
+        apiKey: process.env.API_KEY,
+        baseURL: process.env.BASE_URL,
+    })
+
+    let finalMessage: AssistantMessage | null = null;
+    let usage: any = null;
+
+    const iterator = async function* (): AsyncGenerator<StreamEvent> {
+        try {
+            yield {
+                type: 'start',
+                partial: {
+                    model: model.name,
+                }
+            }
+
+            const messages = [
+                {
+                    role: 'system',
+                    content: context.systemPrompt,
+                },
+                ...context.messages.map(m => ({
+                    role: m.role === 'user' ? 'user' : 'assistant',
+                    content: m.role === 'user' ? m.content : m.content.map(c => c.type === 'text' ? c.text : '').join('\n'),
+                }))
+            ]
+
+            console.log('---messages---', messages);
+
+            console.log('---model---', model.name);
+
+            const response = await openai.chat.completions.create({
+                model: model.name,
+                messages: messages as any,
+                stream: true,
+                tools: context.tools?.map(t => ({
+                    type: 'function',
+                    function: {
+                        name: t.name,
+                        description: t.description,
+                        parameters: t.parameters
+                    }
+                }))
+            })
+
+            const contentBlocks: ContentBlock[] = [];
+            let currentText = ''
+
+            yield { type: 'text_start' };
+
+            for await (const chunk of response) {
+                const delta = chunk.choices[0]?.delta
+                // console.log('---delta---', delta);
+
+                if (delta?.content) {
+                    yield {
+                        type: 'text_delta',
+                        delta: delta.content
+                    };
+                    currentText += delta.content;
+                }
+
+                if (delta?.tool_calls) {
+                    for (const toolCall of delta.tool_calls) {
+                        yield {
+                            type: 'toolcall_start',
+                            contentIndex: contentBlocks.length
+                        };
+                        // 处理 tool call...
+                    }
+                }
+
+                if (chunk.usage) {
+                    usage = {
+                        input: chunk.usage.prompt_tokens,
+                        output: chunk.usage.completion_tokens,
+                        cost: {
+                            total: 0 // 计算实际费用
+                        }
+                    };
+                }
+
+            }
+
+            yield { type: 'text_end' };
+
+            if (currentText) {
+                contentBlocks.push({ type: 'text', text: currentText });
+            }
+
+            finalMessage = {
+                role: 'assistant',
+                content: contentBlocks
+            };
+
+            yield {
+                type: 'done',
+                reason: 'stop'
+            };
+
+        } catch (error) {
+            yield {
+                type: 'error',
+                error
+            };
+
+        }
+
+    }
+
+    console.log('---finalMessage---', finalMessage);
+    console.log('---usage---', usage);
+
+
+    return {
+        [Symbol.asyncIterator]: iterator,
+        async result() {
+            if (!finalMessage) {
+                for await (const _ of this) {
+                    // 消费事件
+                }
+            }
+
+            return { ...finalMessage!, usage }
+        }
+    }
 }

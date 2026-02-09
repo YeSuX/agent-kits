@@ -1,21 +1,21 @@
 import { test, expect, describe, mock, beforeEach } from 'bun:test';
-import { getModel, StringEnum, type Context, type Tool, type ToolResultMessage, type UserMessage } from './index';
+import { getModel, stream, StringEnum, type Context, type Tool, type ToolResultMessage, type UserMessage } from './index';
 import { Type } from '@sinclair/typebox';
 
 describe('getModel', () => {
   test('should return a model instance with correct provider and model name', () => {
-    const model = getModel('kimi', 'kimi-2.5');
+    const model = getModel('kimi', 'kimi-k2.5');
     
     expect(model).toBeDefined();
     expect(model.provider).toBe('kimi');
-    expect(model.name).toBe('kimi-2.5');
+    expect(model.name).toBe('kimi-k2.5');
   });
 
   test('should support different providers', () => {
     const models = [
       getModel('openai', 'gpt-4'),
       getModel('anthropic', 'claude-3-opus'),
-      getModel('kimi', 'kimi-2.5')
+      getModel('kimi', 'kimi-k2.5')
     ];
 
     models.forEach(model => {
@@ -121,180 +121,180 @@ describe('Context', () => {
   });
 });
 
-// describe('stream', () => {
-//   let model: ReturnType<typeof getModel>;
-//   let context: Context;
+describe('stream', () => {
+  let model: ReturnType<typeof getModel>;
+  let context: Context;
 
-//   beforeEach(() => {
-//     model = getModel('kimi', 'kimi-2.5');
-//     context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'Hello' }]
-//     };
-//   });
+  beforeEach(() => {
+    model = getModel('kimi', 'kimi-k2.5');
+    context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'Hello' }]
+    };
+  });
 
-//   test('should emit start event', async () => {
-//     const s = stream(model, context);
-//     const events: any[] = [];
+  test.skip('should emit start event', async () => {
+    const s = stream(model, context);
+    const events: any[] = [];
 
-//     for await (const event of s) {
-//       events.push(event);
-//     }
+    for await (const event of s) {
+      events.push(event);
+    }
 
-//     const startEvent = events.find(e => e.type === 'start');
-//     expect(startEvent).toBeDefined();
-//     expect(startEvent.partial.model).toBeDefined();
-//   });
+    const startEvent = events.find(e => e.type === 'start');
+    expect(startEvent).toBeDefined();
+    expect(startEvent.partial.model).toBeDefined();
+  });
 
-//   test('should emit text events in correct order', async () => {
-//     const s = stream(model, context);
-//     const textEvents: string[] = [];
+  test.skip('should emit text events in correct order', async () => {
+    const s = stream(model, context);
+    const textEvents: string[] = [];
 
-//     for await (const event of s) {
-//       if (event.type === 'text_start' || event.type === 'text_delta' || event.type === 'text_end') {
-//         textEvents.push(event.type);
-//       }
-//     }
+    for await (const event of s) {
+      if (event.type === 'text_start' || event.type === 'text_delta' || event.type === 'text_end') {
+        textEvents.push(event.type);
+      }
+    }
 
-//     // 应该按照 start -> delta... -> end 的顺序
-//     expect(textEvents[0]).toBe('text_start');
-//     expect(textEvents[textEvents.length - 1]).toBe('text_end');
-//   });
+    // 应该按照 start -> delta... -> end 的顺序
+    expect(textEvents[0]).toBe('text_start');
+    expect(textEvents[textEvents.length - 1]).toBe('text_end');
+  });
 
-//   test('should accumulate text deltas', async () => {
-//     const s = stream(model, context);
-//     let accumulatedText = '';
+  // test('should accumulate text deltas', async () => {
+  //   const s = stream(model, context);
+  //   let accumulatedText = '';
 
-//     for await (const event of s) {
-//       if (event.type === 'text_delta') {
-//         accumulatedText += event.delta;
-//       }
-//     }
+  //   for await (const event of s) {
+  //     if (event.type === 'text_delta') {
+  //       accumulatedText += event.delta;
+  //     }
+  //   }
 
-//     expect(accumulatedText.length).toBeGreaterThan(0);
-//   });
+  //   expect(accumulatedText.length).toBeGreaterThan(0);
+  // });
 
-//   test('should handle thinking events', async () => {
-//     const s = stream(model, context);
-//     const thinkingEvents: string[] = [];
+  // test('should handle thinking events', async () => {
+  //   const s = stream(model, context);
+  //   const thinkingEvents: string[] = [];
 
-//     for await (const event of s) {
-//       if (event.type.startsWith('thinking_')) {
-//         thinkingEvents.push(event.type);
-//       }
-//     }
+  //   for await (const event of s) {
+  //     if (event.type.startsWith('thinking_')) {
+  //       thinkingEvents.push(event.type);
+  //     }
+  //   }
 
-//     // 如果有 thinking，应该是 start -> delta... -> end
-//     if (thinkingEvents.length > 0) {
-//       expect(thinkingEvents[0]).toBe('thinking_start');
-//       expect(thinkingEvents[thinkingEvents.length - 1]).toBe('thinking_end');
-//     }
-//   });
+  //   // 如果有 thinking，应该是 start -> delta... -> end
+  //   if (thinkingEvents.length > 0) {
+  //     expect(thinkingEvents[0]).toBe('thinking_start');
+  //     expect(thinkingEvents[thinkingEvents.length - 1]).toBe('thinking_end');
+  //   }
+  // });
 
-//   test('should handle toolcall events', async () => {
-//     const contextWithTools: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'What time is it?' }],
-//       tools: [{
-//         name: 'get_time',
-//         description: 'Get the current time',
-//         parameters: Type.Object({
-//           timezone: Type.Optional(Type.String())
-//         })
-//       }]
-//     };
+  // test('should handle toolcall events', async () => {
+  //   const contextWithTools: Context = {
+  //     systemPrompt: 'You are a helpful assistant.',
+  //     messages: [{ role: 'user', content: 'What time is it?' }],
+  //     tools: [{
+  //       name: 'get_time',
+  //       description: 'Get the current time',
+  //       parameters: Type.Object({
+  //         timezone: Type.Optional(Type.String())
+  //       })
+  //     }]
+  //   };
 
-//     const s = stream(model, contextWithTools);
-//     const toolcallEvents: any[] = [];
+  //   const s = stream(model, contextWithTools);
+  //   const toolcallEvents: any[] = [];
 
-//     for await (const event of s) {
-//       if (event.type.startsWith('toolcall_')) {
-//         toolcallEvents.push(event);
-//       }
-//     }
+  //   for await (const event of s) {
+  //     if (event.type.startsWith('toolcall_')) {
+  //       toolcallEvents.push(event);
+  //     }
+  //   }
 
-//     if (toolcallEvents.length > 0) {
-//       const startEvent = toolcallEvents.find(e => e.type === 'toolcall_start');
-//       const endEvent = toolcallEvents.find(e => e.type === 'toolcall_end');
+  //   if (toolcallEvents.length > 0) {
+  //     const startEvent = toolcallEvents.find(e => e.type === 'toolcall_start');
+  //     const endEvent = toolcallEvents.find(e => e.type === 'toolcall_end');
 
-//       expect(startEvent).toBeDefined();
-//       expect(startEvent.contentIndex).toBeGreaterThanOrEqual(0);
+  //     expect(startEvent).toBeDefined();
+  //     expect(startEvent.contentIndex).toBeGreaterThanOrEqual(0);
       
-//       if (endEvent) {
-//         expect(endEvent.toolCall.name).toBeTruthy();
-//         expect(endEvent.toolCall.arguments).toBeDefined();
-//       }
-//     }
-//   });
+  //     if (endEvent) {
+  //       expect(endEvent.toolCall.name).toBeTruthy();
+  //       expect(endEvent.toolCall.arguments).toBeDefined();
+  //     }
+  //   }
+  // });
 
-//   test('should emit done event with reason', async () => {
-//     const s = stream(model, context);
-//     let doneEvent: any;
+  // test('should emit done event with reason', async () => {
+  //   const s = stream(model, context);
+  //   let doneEvent: any;
 
-//     for await (const event of s) {
-//       if (event.type === 'done') {
-//         doneEvent = event;
-//       }
-//     }
+  //   for await (const event of s) {
+  //     if (event.type === 'done') {
+  //       doneEvent = event;
+  //     }
+  //   }
 
-//     expect(doneEvent).toBeDefined();
-//     expect(doneEvent.reason).toBeTruthy();
-//     expect(['stop', 'length', 'tool_calls']).toContain(doneEvent.reason);
-//   });
+  //   expect(doneEvent).toBeDefined();
+  //   expect(doneEvent.reason).toBeTruthy();
+  //   expect(['stop', 'length', 'tool_calls']).toContain(doneEvent.reason);
+  // });
 
-//   test('should return final message via result()', async () => {
-//     const s = stream(model, context);
+  // test('should return final message via result()', async () => {
+  //   const s = stream(model, context);
     
-//     // 消费流
-//     for await (const event of s) {
-//       // 处理事件
-//     }
+  //   // 消费流
+  //   for await (const event of s) {
+  //     // 处理事件
+  //   }
 
-//     const finalMessage = await s.result();
+  //   const finalMessage = await s.result();
 
-//     expect(finalMessage).toBeDefined();
-//     expect(finalMessage.role).toBe('assistant');
-//     expect(finalMessage.content).toBeDefined();
-//     expect(Array.isArray(finalMessage.content)).toBe(true);
-//   });
+  //   expect(finalMessage).toBeDefined();
+  //   expect(finalMessage.role).toBe('assistant');
+  //   expect(finalMessage.content).toBeDefined();
+  //   expect(Array.isArray(finalMessage.content)).toBe(true);
+  // });
 
-//   test('should include usage information', async () => {
-//     const s = stream(model, context);
+  // test('should include usage information', async () => {
+  //   const s = stream(model, context);
     
-//     for await (const event of s) {
-//       // 消费流
-//     }
+  //   for await (const event of s) {
+  //     // 消费流
+  //   }
 
-//     const finalMessage = await s.result();
+  //   const finalMessage = await s.result();
 
-//     expect(finalMessage.usage).toBeDefined();
-//     expect(finalMessage.usage.input).toBeGreaterThanOrEqual(0);
-//     expect(finalMessage.usage.output).toBeGreaterThanOrEqual(0);
-//     expect(finalMessage.usage.cost).toBeDefined();
-//     expect(finalMessage.usage.cost.total).toBeGreaterThanOrEqual(0);
-//   });
+  //   expect(finalMessage.usage).toBeDefined();
+  //   expect(finalMessage.usage.input).toBeGreaterThanOrEqual(0);
+  //   expect(finalMessage.usage.output).toBeGreaterThanOrEqual(0);
+  //   expect(finalMessage.usage.cost).toBeDefined();
+  //   expect(finalMessage.usage.cost.total).toBeGreaterThanOrEqual(0);
+  // });
 
-//   test('should handle errors gracefully', async () => {
-//     const invalidContext: Context = {
-//       systemPrompt: '',
-//       messages: [] // 空消息可能导致错误
-//     };
+  // test('should handle errors gracefully', async () => {
+  //   const invalidContext: Context = {
+  //     systemPrompt: '',
+  //     messages: [] // 空消息可能导致错误
+  //   };
 
-//     const s = stream(model, invalidContext);
-//     let errorEvent: any;
+  //   const s = stream(model, invalidContext);
+  //   let errorEvent: any;
 
-//     for await (const event of s) {
-//       if (event.type === 'error') {
-//         errorEvent = event;
-//       }
-//     }
+  //   for await (const event of s) {
+  //     if (event.type === 'error') {
+  //       errorEvent = event;
+  //     }
+  //   }
 
-//     // 如果发生错误，应该有 error 事件
-//     if (errorEvent) {
-//       expect(errorEvent.error).toBeDefined();
-//     }
-//   });
-// });
+  //   // 如果发生错误，应该有 error 事件
+  //   if (errorEvent) {
+  //     expect(errorEvent.error).toBeDefined();
+  //   }
+  // });
+});
 
 // describe('complete', () => {
 //   let model: ReturnType<typeof getModel>;
