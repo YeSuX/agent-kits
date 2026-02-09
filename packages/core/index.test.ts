@@ -161,18 +161,18 @@ describe('stream', () => {
     expect(textEvents[textEvents.length - 1]).toBe('text_end');
   });
 
-  // test('should accumulate text deltas', async () => {
-  //   const s = stream(model, context);
-  //   let accumulatedText = '';
+  test.skip('should accumulate text deltas', async () => {
+    const s = stream(model, context);
+    let accumulatedText = '';
 
-  //   for await (const event of s) {
-  //     if (event.type === 'text_delta') {
-  //       accumulatedText += event.delta;
-  //     }
-  //   }
+    for await (const event of s) {
+      if (event.type === 'text_delta') {
+        accumulatedText += event.delta;
+      }
+    }
 
-  //   expect(accumulatedText.length).toBeGreaterThan(0);
-  // });
+    expect(accumulatedText.length).toBeGreaterThan(0);
+  });
 
   // test('should handle thinking events', async () => {
   //   const s = stream(model, context);
