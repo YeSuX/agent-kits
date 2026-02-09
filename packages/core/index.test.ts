@@ -1,5 +1,6 @@
 import { test, expect, describe, mock, beforeEach } from 'bun:test';
-import { getModel } from './index';
+import { getModel, StringEnum, type Tool } from './index';
+import { Type } from '@sinclair/typebox';
 
 describe('getModel', () => {
   test('should return a model instance with correct provider and model name', () => {
@@ -25,35 +26,35 @@ describe('getModel', () => {
   });
 });
 
-// describe('Tool definition', () => {
-//   test('should create tool with TypeBox schema', () => {
-//     const tool: Tool = {
-//       name: 'get_time',
-//       description: 'Get the current time',
-//       parameters: Type.Object({
-//         timezone: Type.Optional(Type.String({ description: 'Optional timezone' }))
-//       })
-//     };
+describe('Tool definition', () => {
+  test('should create tool with TypeBox schema', () => {
+    const tool: Tool = {
+      name: 'get_time',
+      description: 'Get the current time',
+      parameters: Type.Object({
+        timezone: Type.Optional(Type.String({ description: 'Optional timezone' }))
+      })
+    };
 
-//     expect(tool.name).toBe('get_time');
-//     expect(tool.description).toBe('Get the current time');
-//     expect(tool.parameters).toBeDefined();
-//   });
+    expect(tool.name).toBe('get_time');
+    expect(tool.description).toBe('Get the current time');
+    expect(tool.parameters).toBeDefined();
+  });
 
-//   test('should support multiple parameter types', () => {
-//     const weatherTool: Tool = {
-//       name: 'get_weather',
-//       description: 'Get weather information',
-//       parameters: Type.Object({
-//         location: Type.String({ description: 'City name' }),
-//         units: Type.Optional(StringEnum(['celsius', 'fahrenheit'])),
-//         includeForecast: Type.Optional(Type.Boolean())
-//       })
-//     };
+  test('should support multiple parameter types', () => {
+    const weatherTool: Tool = {
+      name: 'get_weather',
+      description: 'Get weather information',
+      parameters: Type.Object({
+        location: Type.String({ description: 'City name' }),
+        units: Type.Optional(StringEnum(['celsius', 'fahrenheit'])),
+        includeForecast: Type.Optional(Type.Boolean())
+      })
+    };
 
-//     expect(weatherTool.parameters).toBeDefined();
-//   });
-// });
+    expect(weatherTool.parameters).toBeDefined();
+  });
+});
 
 // describe('Context', () => {
 //   test('should build a valid context object', () => {
