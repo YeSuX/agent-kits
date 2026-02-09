@@ -2,6 +2,16 @@
   "name": "agent-kits",
   "module": "index.ts",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun test",
+    "clean": "rm -rf packages/*/dist apps/*/dist"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
