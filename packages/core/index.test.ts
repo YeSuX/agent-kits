@@ -1,5 +1,5 @@
 import { test, expect, describe, mock, beforeEach } from 'bun:test';
-import { getModel, StringEnum, type Tool } from './index';
+import { getModel, StringEnum, type Context, type Tool } from './index';
 import { Type } from '@sinclair/typebox';
 
 describe('getModel', () => {
@@ -56,70 +56,70 @@ describe('Tool definition', () => {
   });
 });
 
-// describe('Context', () => {
-//   test('should build a valid context object', () => {
-//     const tools: Tool[] = [{
-//       name: 'test_tool',
-//       description: 'A test tool',
-//       parameters: Type.Object({})
-//     }];
+describe('Context', () => {
+  test('should build a valid context object', () => {
+    const tools: Tool[] = [{
+      name: 'test_tool',
+      description: 'A test tool',
+      parameters: Type.Object({})
+    }];
 
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'Hello' }],
-//       tools
-//     };
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'Hello' }],
+      tools
+    };
 
-//     expect(context.systemPrompt).toBe('You are a helpful assistant.');
-//     expect(context.messages).toHaveLength(1);
-//     expect(context.messages[0].role).toBe('user');
-//     expect(context.tools).toHaveLength(1);
-//   });
+    expect(context.systemPrompt).toBe('You are a helpful assistant.');
+    expect(context.messages).toHaveLength(1);
+    expect(context.messages[0].role).toBe('user');
+    expect(context.tools).toHaveLength(1);
+  });
 
-//   test('should support message history', () => {
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [
-//         { role: 'user', content: 'First question' },
-//         { role: 'assistant', content: [{ type: 'text', text: 'First answer' }] },
-//         { role: 'user', content: 'Second question' }
-//       ]
-//     };
+  test('should support message history', () => {
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [
+        { role: 'user', content: 'First question' },
+        { role: 'assistant', content: [{ type: 'text', text: 'First answer' }] },
+        { role: 'user', content: 'Second question' }
+      ]
+    };
 
-//     expect(context.messages).toHaveLength(3);
-//   });
+    expect(context.messages).toHaveLength(3);
+  });
 
-//   test('should support tool result messages', () => {
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [
-//         { role: 'user', content: 'What time is it?' },
-//         {
-//           role: 'assistant',
-//           content: [{
-//             type: 'toolCall',
-//             id: 'call_123',
-//             name: 'get_time',
-//             arguments: { timezone: 'UTC' }
-//           }]
-//         },
-//         {
-//           role: 'toolResult',
-//           toolCallId: 'call_123',
-//           toolName: 'get_time',
-//           content: [{ type: 'text', text: '2024-01-01 12:00:00 UTC' }],
-//           isError: false,
-//           timestamp: Date.now()
-//         }
-//       ]
-//     };
+  test('should support tool result messages', () => {
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [
+        { role: 'user', content: 'What time is it?' },
+        {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'call_123',
+            name: 'get_time',
+            arguments: { timezone: 'UTC' }
+          }]
+        },
+        {
+          role: 'toolResult',
+          toolCallId: 'call_123',
+          toolName: 'get_time',
+          content: [{ type: 'text', text: '2024-01-01 12:00:00 UTC' }],
+          isError: false,
+          timestamp: Date.now()
+        }
+      ]
+    };
 
-//     const toolResult = context.messages[2];
-//     expect(toolResult.role).toBe('toolResult');
-//     expect(toolResult.toolCallId).toBe('call_123');
-//     expect(toolResult.isError).toBe(false);
-//   });
-// });
+    const toolResult = context.messages[2];
+    expect(toolResult.role).toBe('toolResult');
+    expect(toolResult.toolCallId).toBe('call_123');
+    expect(toolResult.isError).toBe(false);
+  });
+});
 
 // describe('stream', () => {
 //   let model: ReturnType<typeof getModel>;
