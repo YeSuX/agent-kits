@@ -124,6 +124,9 @@ export function stream(model: Model, context: Context): StreamReturn {
                 model: model.name,
                 messages: messages as any,
                 stream: true,
+                stream_options: {
+                    include_usage: true,
+                },
                 tools: context.tools?.map(t => ({
                     type: 'function',
                     function: {
@@ -140,6 +143,8 @@ export function stream(model: Model, context: Context): StreamReturn {
             yield { type: 'text_start' };
 
             for await (const chunk of response) {
+                // console.log('---chunk---', chunk);
+
                 const delta = chunk.choices[0]?.delta
                 // console.log('---delta---', delta);
 
@@ -166,8 +171,10 @@ export function stream(model: Model, context: Context): StreamReturn {
                         input: chunk.usage.prompt_tokens,
                         output: chunk.usage.completion_tokens,
                         cost: {
-                            total: 0 // 计算实际费用
-                        }
+                            total: chunk.usage.total_tokens // 计算实际费用
+                        },
+                        // @ts-ignore
+                        cached: chunk.usage.cached_tokens,
                     };
                 }
 

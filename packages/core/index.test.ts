@@ -264,42 +264,46 @@ describe('stream', () => {
     expect(Array.isArray(finalMessage.content)).toBe(true);
   });
 
-  // test('should include usage information', async () => {
-  //   const s = stream(model, context);
+  test.skip('should include usage information', async () => {
+    const s = stream(model, context);
     
-  //   for await (const event of s) {
-  //     // 消费流
-  //   }
+    for await (const event of s) {
+      // 消费流
+      console.log('---event---', event);
+      
+    }
 
-  //   const finalMessage = await s.result();
+    const finalMessage = await s.result();
 
-  //   expect(finalMessage.usage).toBeDefined();
-  //   expect(finalMessage.usage.input).toBeGreaterThanOrEqual(0);
-  //   expect(finalMessage.usage.output).toBeGreaterThanOrEqual(0);
-  //   expect(finalMessage.usage.cost).toBeDefined();
-  //   expect(finalMessage.usage.cost.total).toBeGreaterThanOrEqual(0);
-  // });
+    console.log('---finalMessage---', finalMessage);
+    
+    expect(finalMessage.usage).toBeDefined();
+    expect(finalMessage.usage.input).toBeGreaterThanOrEqual(0);
+    expect(finalMessage.usage.output).toBeGreaterThanOrEqual(0);
+    expect(finalMessage.usage.cost).toBeDefined();
+    expect(finalMessage.usage.cost.total).toBeGreaterThanOrEqual(0);
+  });
 
-  // test('should handle errors gracefully', async () => {
-  //   const invalidContext: Context = {
-  //     systemPrompt: '',
-  //     messages: [] // 空消息可能导致错误
-  //   };
+  test.skip('should handle errors gracefully', async () => {
+    const invalidContext: Context = {
+      systemPrompt: '',
+      messages: [] // 空消息可能导致错误
+    };
 
-  //   const s = stream(model, invalidContext);
-  //   let errorEvent: any;
+    const s = stream(model, invalidContext);
+    let errorEvent: any;
 
-  //   for await (const event of s) {
-  //     if (event.type === 'error') {
-  //       errorEvent = event;
-  //     }
-  //   }
+    for await (const event of s) {
+      if (event.type === 'error') {
+        errorEvent = event;
+      }
+    }
 
-  //   // 如果发生错误，应该有 error 事件
-  //   if (errorEvent) {
-  //     expect(errorEvent.error).toBeDefined();
-  //   }
-  // });
+    // 如果发生错误，应该有 error 事件
+    if (errorEvent) {
+      expect(errorEvent.error).toBeDefined();
+    }
+  });
 });
 
 // describe('complete', () => {
