@@ -377,129 +377,133 @@ describe('complete', () => {
   });
 });
 
-// describe('Tool execution flow', () => {
-//   test('should handle complete tool execution cycle', async () => {
-//     const model = getModel('kimi', 'kimi-2.5');
-//     const tools: Tool[] = [{
-//       name: 'get_time',
-//       description: 'Get the current time',
-//       parameters: Type.Object({
-//         timezone: Type.Optional(Type.String())
-//       })
-//     }];
+describe('Tool execution flow', () => {
+  test.skip('should handle complete tool execution cycle', async () => {
+    const model = getModel('kimi', 'kimi-k2.5');
+    const tools: Tool[] = [{
+      name: 'get_time',
+      description: 'Get the current time',
+      parameters: Type.Object({
+        timezone: Type.Optional(Type.String())
+      })
+    }];
 
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'What time is it in Tokyo?' }],
-//       tools
-//     };
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'What time is it in Tokyo?' }],
+      tools
+    };
 
-//     // 第一次调用
-//     const firstResponse = await complete(model, context);
-//     context.messages.push(firstResponse);
+    // 第一次调用
+    const firstResponse = await complete(model, context);
+    console.log('---firstResponse---', firstResponse);
 
-//     const toolCalls = firstResponse.content.filter(b => b.type === 'toolCall');
+    context.messages.push(firstResponse);
 
-//     if (toolCalls.length > 0) {
-//       // 执行工具
-//       for (const call of toolCalls) {
-//         const result = call.name === 'get_time'
-//           ? new Date().toLocaleString('en-US', {
-//             timeZone: call.arguments.timezone || 'UTC',
-//             dateStyle: 'full',
-//             timeStyle: 'long'
-//           })
-//           : 'Unknown tool';
+    const toolCalls = firstResponse.content.filter(b => b.type === 'toolCall');
 
-//         // 添加工具结果
-//         context.messages.push({
-//           role: 'toolResult',
-//           toolCallId: call.id,
-//           toolName: call.name,
-//           content: [{ type: 'text', text: result }],
-//           isError: false,
-//           timestamp: Date.now()
-//         });
-//       }
+    if (toolCalls.length > 0) {
+      // 执行工具
+      for (const call of toolCalls) {
+        const result = call.name === 'get_time'
+          ? new Date().toLocaleString('en-US', {
+            timeZone: call.arguments.timezone || 'UTC',
+            dateStyle: 'full',
+            timeStyle: 'long'
+          })
+          : 'Unknown tool';
 
-//       // 继续对话
-//       const continuation = await complete(model, context);
-//       context.messages.push(continuation);
+        // 添加工具结果
+        context.messages.push({
+          role: 'toolResult',
+          toolCallId: call.id,
+          toolName: call.name,
+          content: [{ type: 'text', text: result }],
+          isError: false,
+          timestamp: Date.now()
+        });
+      }
 
-//       expect(continuation.content.length).toBeGreaterThan(0);
+      // 继续对话
+      const continuation = await complete(model, context);
+      console.log('---continuation---', continuation);
 
-//       // 最终响应应该包含文本（不是工具调用）
-//       const hasText = continuation.content.some(b => b.type === 'text');
-//       expect(hasText).toBe(true);
-//     }
-//   });
+      context.messages.push(continuation);
 
-//   test('should handle tool errors', async () => {
-//     const model = getModel('kimi', 'kimi-2.5');
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [
-//         { role: 'user', content: 'What time is it?' },
-//         {
-//           role: 'assistant',
-//           content: [{
-//             type: 'toolCall',
-//             id: 'call_123',
-//             name: 'get_time',
-//             arguments: {}
-//           }]
-//         },
-//         {
-//           role: 'toolResult',
-//           toolCallId: 'call_123',
-//           toolName: 'get_time',
-//           content: [{ type: 'text', text: 'Error: Invalid timezone' }],
-//           isError: true,
-//           timestamp: Date.now()
-//         }
-//       ]
-//     };
+      expect(continuation.content.length).toBeGreaterThan(0);
 
-//     const response = await complete(model, context);
+      // 最终响应应该包含文本（不是工具调用）
+      const hasText = continuation.content.some(b => b.type === 'text');
+      expect(hasText).toBe(true);
+    }
+  }, { timeout: 10000 });
 
-//     expect(response).toBeDefined();
-//     expect(response.content.length).toBeGreaterThan(0);
-//   });
+  test.skip('should handle tool errors', async () => {
+    const model = getModel('kimi', 'kimi-k2.5');
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [
+        { role: 'user', content: 'What time is it?' },
+        {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'call_123',
+            name: 'get_time',
+            arguments: {}
+          }]
+        },
+        {
+          role: 'toolResult',
+          toolCallId: 'call_123',
+          toolName: 'get_time',
+          content: [{ type: 'text', text: 'Error: Invalid timezone' }],
+          isError: true,
+          timestamp: Date.now()
+        }
+      ]
+    };
 
-//   test('should support image content in tool results', async () => {
-//     const model = getModel('kimi', 'kimi-2.5');
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [
-//         { role: 'user', content: 'Show me a chart' },
-//         {
-//           role: 'assistant',
-//           content: [{
-//             type: 'toolCall',
-//             id: 'call_456',
-//             name: 'generate_chart',
-//             arguments: { type: 'bar' }
-//           }]
-//         },
-//         {
-//           role: 'toolResult',
-//           toolCallId: 'call_456',
-//           toolName: 'generate_chart',
-//           content: [
-//             { type: 'text', text: 'Generated chart:' },
-//             { type: 'image', url: 'data:image/png;base64,iVBORw0...' }
-//           ],
-//           isError: false,
-//           timestamp: Date.now()
-//         }
-//       ]
-//     };
+    const response = await complete(model, context);
 
-//     const response = await complete(model, context);
+    expect(response).toBeDefined();
+    expect(response.content.length).toBeGreaterThan(0);
+  }, { timeout: 10000 });
 
-//     expect(response).toBeDefined();
-//   });
-// });
+  test('should support image content in tool results', async () => {
+    const model = getModel('kimi', 'kimi-k2.5');
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [
+        { role: 'user', content: 'Show me a chart' },
+        {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'call_456',
+            name: 'generate_chart',
+            arguments: { type: 'bar' }
+          }]
+        },
+        {
+          role: 'toolResult',
+          toolCallId: 'call_456',
+          toolName: 'generate_chart',
+          content: [
+            { type: 'text', text: 'Generated chart:' },
+            { type: 'image', url: 'data:image/png;base64,iVBORw0...' }
+          ],
+          isError: false,
+          timestamp: Date.now()
+        }
+      ]
+    };
+
+    const response = await complete(model, context);
+
+    expect(response).toBeDefined();
+  }, { timeout: 10000 });
+});
 
 // describe('Streaming with tool calls', () => {
 //   test('should stream tool call execution', async () => {

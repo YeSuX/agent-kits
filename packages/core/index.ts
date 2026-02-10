@@ -246,15 +246,34 @@ export async function complete(model: Model, context: Context): Promise<Assistan
             content: context.systemPrompt,
         },
         ...context.messages.map(m => {
+            console.log('---m---', m);
+
             if (m.role === 'user') {
                 return { role: 'user', content: m.content };
             } else if (m.role === 'assistant') {
+                const textContent = m.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
+
+                const toolCalls = m.content.filter(c => c.type === 'toolCall').map(c => ({
+                    id: c.id, type: 'function' as const, function: {
+                        name: c.name,
+                        arguments: JSON.stringify(c.arguments)
+                    }
+                }));
+
                 return {
                     role: 'assistant',
-                    content: m.content.map(c => c.type === 'text' ? c.text : '').join('\n'),
+                    content: textContent || null,
+                    ...(toolCalls.length > 0 && { tool_calls: toolCalls, reasoning_content: 'Tool call reasoning' })
                 };
+            } else if (m.role === 'toolResult') {
+                return {
+                    role: 'tool',
+                    tool_call_id: m.toolCallId,
+                    content: m.content.filter(c => c.type === 'text').map(c => c.text).join('\n')
+                }
             }
-            // 处理 toolResult...
+
+            return null;
         })
     ];
 
