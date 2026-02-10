@@ -268,15 +268,20 @@ export async function complete(model: Model, context: Context): Promise<Assistan
 
     const choice = response.choices[0]!;
 
+    console.log('---response---', response);
+
+
     if (choice.message.content) {
         contentBlocks.push({
             type: 'text',
-            text: choice.message.content
+            text: choice.message.content,
         });
     }
 
     if (choice.message.tool_calls) {
         for (const toolCall of choice.message.tool_calls) {
+            console.log('---toolCall---', toolCall);
+
             contentBlocks.push({
                 type: 'toolCall',
                 id: toolCall.id,
@@ -291,6 +296,15 @@ export async function complete(model: Model, context: Context): Promise<Assistan
 
     return {
         role: 'assistant',
-        content: contentBlocks
+        content: contentBlocks,
+        usage: {
+            input: response.usage?.prompt_tokens,
+            output: response.usage?.completion_tokens,
+            cost: {
+                total: response.usage?.total_tokens
+            },
+            // @ts-ignore
+            cached: response.usage?.cached_tokens,
+        }
     }
 }

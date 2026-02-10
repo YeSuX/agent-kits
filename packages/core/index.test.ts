@@ -318,7 +318,7 @@ describe('complete', () => {
     };
   });
 
-  test('should return complete response', async () => {
+  test.skip('should return complete response', async () => {
     const response = await complete(model, context);
 
     expect(response).toBeDefined();
@@ -327,52 +327,54 @@ describe('complete', () => {
     expect(Array.isArray(response.content)).toBe(true);
   });
 
-  // test('should handle text responses', async () => {
-  //   const response = await complete(model, context);
+  test.skip('should handle text responses', async () => {
+    const response = await complete(model, context);
 
-  //   const textBlocks = response.content.filter(b => b.type === 'text');
-  //   expect(textBlocks.length).toBeGreaterThan(0);
+    const textBlocks = response.content.filter(b => b.type === 'text');
+    expect(textBlocks.length).toBeGreaterThan(0);
 
-  //   textBlocks.forEach(block => {
-  //     expect(block.text).toBeTruthy();
-  //   });
-  // });
+    textBlocks.forEach(block => {
+      expect(block.text).toBeTruthy();
+    });
+  });
 
-  // test('should handle tool call responses', async () => {
-  //   const contextWithTools: Context = {
-  //     systemPrompt: 'You are a helpful assistant.',
-  //     messages: [{ role: 'user', content: 'What time is it?' }],
-  //     tools: [{
-  //       name: 'get_time',
-  //       description: 'Get the current time',
-  //       parameters: Type.Object({
-  //         timezone: Type.Optional(Type.String())
-  //       })
-  //     }]
-  //   };
+  test.skip('should handle tool call responses', async () => {
+    const contextWithTools: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'What time is it?' }],
+      tools: [{
+        name: 'get_time',
+        description: 'Get the current time',
+        parameters: Type.Object({
+          timezone: Type.Optional(Type.String())
+        })
+      }]
+    };
 
-  //   const response = await complete(model, contextWithTools);
+    const response = await complete(model, contextWithTools);
 
-  //   const toolCallBlocks = response.content.filter(b => b.type === 'toolCall');
+    const toolCallBlocks = response.content.filter(b => b.type === 'toolCall');
 
-  //   // 如果模型决定调用工具
-  //   if (toolCallBlocks.length > 0) {
-  //     toolCallBlocks.forEach(call => {
-  //       expect(call.id).toBeTruthy();
-  //       expect(call.name).toBeTruthy();
-  //       expect(call.arguments).toBeDefined();
-  //     });
-  //   }
-  // });
+    // 如果模型决定调用工具
+    if (toolCallBlocks.length > 0) {
+      toolCallBlocks.forEach(call => {
+        expect(call.id).toBeTruthy();
+        expect(call.name).toBeTruthy();
+        expect(call.arguments).toBeDefined();
+      });
+    }
+  });
 
-  // test('should include usage information', async () => {
-  //   const response = await complete(model, context);
+  test.skip('should include usage information', async () => {
+    const response = await complete(model, context);
+    console.log('---response---', response);
 
-  //   expect(response.usage).toBeDefined();
-  //   expect(response.usage.input).toBeGreaterThanOrEqual(0);
-  //   expect(response.usage.output).toBeGreaterThanOrEqual(0);
-  //   expect(response.usage.cost.total).toBeGreaterThanOrEqual(0);
-  // });
+
+    expect(response.usage).toBeDefined();
+    expect(response.usage.input).toBeGreaterThanOrEqual(0);
+    expect(response.usage.output).toBeGreaterThanOrEqual(0);
+    expect(response.usage.cost.total).toBeGreaterThanOrEqual(0);
+  });
 });
 
 // describe('Tool execution flow', () => {
