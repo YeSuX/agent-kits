@@ -19,6 +19,11 @@ export type TextBlock = {
     text: string;
 };
 
+export type ImageBlock = {
+    type: 'image';
+    image: string;
+};
+
 export type ToolCallBlock = {
     type: 'toolCall';
     id: string;
@@ -26,7 +31,7 @@ export type ToolCallBlock = {
     arguments: Record<string, any>;
 };
 
-export type ContentBlock = TextBlock | ToolCallBlock;
+export type ContentBlock = TextBlock | ToolCallBlock | ImageBlock;
 
 // 消息类型
 export type UserMessage = {

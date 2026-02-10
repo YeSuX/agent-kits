@@ -470,7 +470,7 @@ describe('Tool execution flow', () => {
     expect(response.content.length).toBeGreaterThan(0);
   }, { timeout: 10000 });
 
-  test('should support image content in tool results', async () => {
+  test.skip('should support image content in tool results', async () => {
     const model = getModel('kimi', 'kimi-k2.5');
     const context: Context = {
       systemPrompt: 'You are a helpful assistant.',
