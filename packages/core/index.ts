@@ -57,6 +57,16 @@ export interface Context {
     tools?: Tool[];
 }
 
+// Usage 类型
+export interface Usage {
+    input: number;
+    output: number;
+    cost: {
+        total: number;
+    };
+    cached?: number;
+}
+
 export function isToolCallBlock(block: ContentBlock): block is ToolCallBlock {
     return block.type === 'toolCall';
 }
@@ -81,7 +91,7 @@ export interface StreamEvent {
 }
 
 export interface StreamReturn extends AsyncIterable<StreamEvent> {
-    result(): Promise<AssistantMessage & { usage: any }>;
+    result(): Promise<AssistantMessage & { usage: Usage }>;
 }
 
 export function stream(model: Model, context: Context): StreamReturn {
@@ -94,7 +104,7 @@ export function stream(model: Model, context: Context): StreamReturn {
     })
 
     let finalMessage: AssistantMessage | null = null;
-    let usage: any = null;
+    let usage: Usage | null = null;
 
     const iterator = async function* (): AsyncGenerator<StreamEvent> {
         try {
@@ -168,13 +178,12 @@ export function stream(model: Model, context: Context): StreamReturn {
 
                 if (chunk.usage) {
                     usage = {
-                        input: chunk.usage.prompt_tokens,
-                        output: chunk.usage.completion_tokens,
+                        input: chunk.usage.prompt_tokens || 0,
+                        output: chunk.usage.completion_tokens || 0,
                         cost: {
-                            total: chunk.usage.total_tokens // 计算实际费用
+                            total: chunk.usage.total_tokens || 0
                         },
-                        // @ts-ignore
-                        cached: chunk.usage.cached_tokens,
+                        cached: (chunk.usage as any).cached_tokens,
                     };
                 }
 
@@ -219,12 +228,12 @@ export function stream(model: Model, context: Context): StreamReturn {
                 }
             }
 
-            return { ...finalMessage!, usage }
+            return { ...finalMessage!, usage: usage! }
         }
     }
 }
 
-export async function complete(model: Model, context: Context): Promise<AssistantMessage> {
+export async function complete(model: Model, context: Context): Promise<AssistantMessage & { usage: Usage }> {
     const openai = new OpenAI({
         apiKey: process.env.API_KEY,
         baseURL: process.env.BASE_URL,
@@ -282,12 +291,14 @@ export async function complete(model: Model, context: Context): Promise<Assistan
         for (const toolCall of choice.message.tool_calls) {
             console.log('---toolCall---', toolCall);
 
-            contentBlocks.push({
-                type: 'toolCall',
-                id: toolCall.id,
-                name: toolCall.function.name,
-                arguments: JSON.parse(toolCall.function.arguments)
-            });
+            if (toolCall.type === 'function') {
+                contentBlocks.push({
+                    type: 'toolCall',
+                    id: toolCall.id,
+                    name: toolCall.function.name,
+                    arguments: JSON.parse(toolCall.function.arguments)
+                });
+            }
         }
     }
 
@@ -298,13 +309,12 @@ export async function complete(model: Model, context: Context): Promise<Assistan
         role: 'assistant',
         content: contentBlocks,
         usage: {
-            input: response.usage?.prompt_tokens,
-            output: response.usage?.completion_tokens,
+            input: response.usage?.prompt_tokens || 0,
+            output: response.usage?.completion_tokens || 0,
             cost: {
-                total: response.usage?.total_tokens
+                total: response.usage?.total_tokens || 0
             },
-            // @ts-ignore
-            cached: response.usage?.cached_tokens,
+            cached: (response.usage as any)?.cached_tokens,
         }
     }
 }
