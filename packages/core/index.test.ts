@@ -1,11 +1,11 @@
 import { test, expect, describe, mock, beforeEach } from 'bun:test';
-import { getModel, stream, StringEnum, type Context, type Tool, type ToolResultMessage, type UserMessage } from './index';
+import { complete, getModel, stream, StringEnum, type Context, type Tool, type ToolResultMessage, type UserMessage } from './index';
 import { Type } from '@sinclair/typebox';
 
 describe('getModel', () => {
   test('should return a model instance with correct provider and model name', () => {
     const model = getModel('kimi', 'kimi-k2.5');
-    
+
     expect(model).toBeDefined();
     expect(model.provider).toBe('kimi');
     expect(model.name).toBe('kimi-k2.5');
@@ -181,7 +181,7 @@ describe('stream', () => {
 
     for await (const event of s) {
       console.log('---event---', event);
-      
+
       if (event.type.startsWith('thinking_')) {
         thinkingEvents.push(event.type);
       }
@@ -222,7 +222,7 @@ describe('stream', () => {
 
       expect(startEvent).toBeDefined();
       expect(startEvent.contentIndex).toBeGreaterThanOrEqual(0);
-      
+
       if (endEvent) {
         expect(endEvent.toolCall.name).toBeTruthy();
         expect(endEvent.toolCall.arguments).toBeDefined();
@@ -247,7 +247,7 @@ describe('stream', () => {
 
   test.skip('should return final message via result()', async () => {
     const s = stream(model, context);
-    
+
     // 消费流
     for await (const event of s) {
       // 处理事件
@@ -256,7 +256,7 @@ describe('stream', () => {
     const finalMessage = await s.result();
 
     console.log('---finalMessage---', finalMessage);
-    
+
 
     expect(finalMessage).toBeDefined();
     expect(finalMessage.role).toBe('assistant');
@@ -266,17 +266,17 @@ describe('stream', () => {
 
   test.skip('should include usage information', async () => {
     const s = stream(model, context);
-    
+
     for await (const event of s) {
       // 消费流
       console.log('---event---', event);
-      
+
     }
 
     const finalMessage = await s.result();
 
     console.log('---finalMessage---', finalMessage);
-    
+
     expect(finalMessage.usage).toBeDefined();
     expect(finalMessage.usage.input).toBeGreaterThanOrEqual(0);
     expect(finalMessage.usage.output).toBeGreaterThanOrEqual(0);
@@ -306,74 +306,74 @@ describe('stream', () => {
   });
 });
 
-// describe('complete', () => {
-//   let model: ReturnType<typeof getModel>;
-//   let context: Context;
+describe('complete', () => {
+  let model: ReturnType<typeof getModel>;
+  let context: Context;
 
-//   beforeEach(() => {
-//     model = getModel('kimi', 'kimi-2.5');
-//     context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'Hello' }]
-//     };
-//   });
+  beforeEach(() => {
+    model = getModel('kimi', 'kimi-k2.5');
+    context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'Hello' }]
+    };
+  });
 
-//   test('should return complete response', async () => {
-//     const response = await complete(model, context);
+  test('should return complete response', async () => {
+    const response = await complete(model, context);
 
-//     expect(response).toBeDefined();
-//     expect(response.role).toBe('assistant');
-//     expect(response.content).toBeDefined();
-//     expect(Array.isArray(response.content)).toBe(true);
-//   });
+    expect(response).toBeDefined();
+    expect(response.role).toBe('assistant');
+    expect(response.content).toBeDefined();
+    expect(Array.isArray(response.content)).toBe(true);
+  });
 
-//   test('should handle text responses', async () => {
-//     const response = await complete(model, context);
-    
-//     const textBlocks = response.content.filter(b => b.type === 'text');
-//     expect(textBlocks.length).toBeGreaterThan(0);
-    
-//     textBlocks.forEach(block => {
-//       expect(block.text).toBeTruthy();
-//     });
-//   });
+  // test('should handle text responses', async () => {
+  //   const response = await complete(model, context);
 
-//   test('should handle tool call responses', async () => {
-//     const contextWithTools: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'What time is it?' }],
-//       tools: [{
-//         name: 'get_time',
-//         description: 'Get the current time',
-//         parameters: Type.Object({
-//           timezone: Type.Optional(Type.String())
-//         })
-//       }]
-//     };
+  //   const textBlocks = response.content.filter(b => b.type === 'text');
+  //   expect(textBlocks.length).toBeGreaterThan(0);
 
-//     const response = await complete(model, contextWithTools);
-    
-//     const toolCallBlocks = response.content.filter(b => b.type === 'toolCall');
-    
-//     // 如果模型决定调用工具
-//     if (toolCallBlocks.length > 0) {
-//       toolCallBlocks.forEach(call => {
-//         expect(call.id).toBeTruthy();
-//         expect(call.name).toBeTruthy();
-//         expect(call.arguments).toBeDefined();
-//       });
-//     }
-//   });
+  //   textBlocks.forEach(block => {
+  //     expect(block.text).toBeTruthy();
+  //   });
+  // });
 
-//   test('should include usage information', async () => {
-//     const response = await complete(model, context);
+  // test('should handle tool call responses', async () => {
+  //   const contextWithTools: Context = {
+  //     systemPrompt: 'You are a helpful assistant.',
+  //     messages: [{ role: 'user', content: 'What time is it?' }],
+  //     tools: [{
+  //       name: 'get_time',
+  //       description: 'Get the current time',
+  //       parameters: Type.Object({
+  //         timezone: Type.Optional(Type.String())
+  //       })
+  //     }]
+  //   };
 
-//     expect(response.usage).toBeDefined();
-//     expect(response.usage.input).toBeGreaterThanOrEqual(0);
-//     expect(response.usage.output).toBeGreaterThanOrEqual(0);
-//     expect(response.usage.cost.total).toBeGreaterThanOrEqual(0);
-//   });
-// });
+  //   const response = await complete(model, contextWithTools);
+
+  //   const toolCallBlocks = response.content.filter(b => b.type === 'toolCall');
+
+  //   // 如果模型决定调用工具
+  //   if (toolCallBlocks.length > 0) {
+  //     toolCallBlocks.forEach(call => {
+  //       expect(call.id).toBeTruthy();
+  //       expect(call.name).toBeTruthy();
+  //       expect(call.arguments).toBeDefined();
+  //     });
+  //   }
+  // });
+
+  // test('should include usage information', async () => {
+  //   const response = await complete(model, context);
+
+  //   expect(response.usage).toBeDefined();
+  //   expect(response.usage.input).toBeGreaterThanOrEqual(0);
+  //   expect(response.usage.output).toBeGreaterThanOrEqual(0);
+  //   expect(response.usage.cost.total).toBeGreaterThanOrEqual(0);
+  // });
+});
 
 // describe('Tool execution flow', () => {
 //   test('should handle complete tool execution cycle', async () => {
@@ -403,10 +403,10 @@ describe('stream', () => {
 //       for (const call of toolCalls) {
 //         const result = call.name === 'get_time'
 //           ? new Date().toLocaleString('en-US', {
-//               timeZone: call.arguments.timezone || 'UTC',
-//               dateStyle: 'full',
-//               timeStyle: 'long'
-//             })
+//             timeZone: call.arguments.timezone || 'UTC',
+//             dateStyle: 'full',
+//             timeStyle: 'long'
+//           })
 //           : 'Unknown tool';
 
 //         // 添加工具结果
@@ -425,7 +425,7 @@ describe('stream', () => {
 //       context.messages.push(continuation);
 
 //       expect(continuation.content.length).toBeGreaterThan(0);
-      
+
 //       // 最终响应应该包含文本（不是工具调用）
 //       const hasText = continuation.content.some(b => b.type === 'text');
 //       expect(hasText).toBe(true);
@@ -532,11 +532,11 @@ describe('stream', () => {
 
 //     if (toolCalls.length > 0) {
 //       expect(toolCallEvents.length).toBeGreaterThan(0);
-      
+
 //       // 验证事件顺序
 //       const startEvents = toolCallEvents.filter(e => e.type === 'toolcall_start');
 //       const endEvents = toolCallEvents.filter(e => e.type === 'toolcall_end');
-      
+
 //       expect(startEvents.length).toBeGreaterThan(0);
 //       expect(endEvents.length).toBeGreaterThan(0);
 //     }
@@ -601,7 +601,7 @@ describe('stream', () => {
 //       ]
 //     };
 
-//     expect(validContext.messages.every(m => 
+//     expect(validContext.messages.every(m =>
 //       ['user', 'assistant', 'toolResult'].includes(m.role)
 //     )).toBe(true);
 //   });

@@ -223,3 +223,74 @@ export function stream(model: Model, context: Context): StreamReturn {
         }
     }
 }
+
+export async function complete(model: Model, context: Context): Promise<AssistantMessage> {
+    const openai = new OpenAI({
+        apiKey: process.env.API_KEY,
+        baseURL: process.env.BASE_URL,
+    })
+
+    // 构建消息
+    const messages = [
+        {
+            role: 'system',
+            content: context.systemPrompt,
+        },
+        ...context.messages.map(m => {
+            if (m.role === 'user') {
+                return { role: 'user', content: m.content };
+            } else if (m.role === 'assistant') {
+                return {
+                    role: 'assistant',
+                    content: m.content.map(c => c.type === 'text' ? c.text : '').join('\n'),
+                };
+            }
+            // 处理 toolResult...
+        })
+    ];
+
+    // 调用 API
+    const response = await openai.chat.completions.create({
+        model: model.name,
+        messages: messages as any,
+        tools: context.tools?.map(t => ({
+            type: 'function',
+            function: {
+                name: t.name,
+                description: t.description,
+                parameters: t.parameters
+            }
+        }))
+    });
+
+    // 转换响应
+    const contentBlocks: ContentBlock[] = [];
+
+    const choice = response.choices[0]!;
+
+    if (choice.message.content) {
+        contentBlocks.push({
+            type: 'text',
+            text: choice.message.content
+        });
+    }
+
+    if (choice.message.tool_calls) {
+        for (const toolCall of choice.message.tool_calls) {
+            contentBlocks.push({
+                type: 'toolCall',
+                id: toolCall.id,
+                name: toolCall.function.name,
+                arguments: JSON.parse(toolCall.function.arguments)
+            });
+        }
+    }
+
+    console.log('---contentBlocks---', contentBlocks);
+
+
+    return {
+        role: 'assistant',
+        content: contentBlocks
+    }
+}
