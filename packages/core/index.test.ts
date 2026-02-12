@@ -505,49 +505,50 @@ describe('Tool execution flow', () => {
   }, { timeout: 10000 });
 });
 
-// describe('Streaming with tool calls', () => {
-//   test('should stream tool call execution', async () => {
-//     const model = getModel('kimi', 'kimi-2.5');
-//     const tools: Tool[] = [{
-//       name: 'get_time',
-//       description: 'Get the current time',
-//       parameters: Type.Object({
-//         timezone: Type.Optional(Type.String())
-//       })
-//     }];
+describe('Streaming with tool calls', () => {
+  test('should stream tool call execution', async () => {
+    const model = getModel('kimi', 'kimi-k2.5');
+    const tools: Tool[] = [{
+      name: 'get_time',
+      description: 'Get the current time',
+      parameters: Type.Object({
+        timezone: Type.Optional(Type.String())
+      })
+    }];
 
-//     const context: Context = {
-//       systemPrompt: 'You are a helpful assistant.',
-//       messages: [{ role: 'user', content: 'What time is it?' }],
-//       tools
-//     };
+    const context: Context = {
+      systemPrompt: 'You are a helpful assistant.',
+      messages: [{ role: 'user', content: 'What time is it?' }],
+      tools
+    };
 
-//     const s = stream(model, context);
-//     const toolCallEvents: any[] = [];
+    const s = stream(model, context);
+    const toolCallEvents: any[] = [];
 
-//     for await (const event of s) {
-//       if (event.type === 'toolcall_start' || event.type === 'toolcall_delta' || event.type === 'toolcall_end') {
-//         toolCallEvents.push(event);
-//       }
-//     }
+    for await (const event of s) {
+      console.log('---event---', event);
+      if (event.type === 'toolcall_start' || event.type === 'toolcall_delta' || event.type === 'toolcall_end') {
+        toolCallEvents.push(event);
+      }
+    }
 
-//     const finalMessage = await s.result();
-//     context.messages.push(finalMessage);
+    const finalMessage = await s.result();
+    context.messages.push(finalMessage);
 
-//     const toolCalls = finalMessage.content.filter(b => b.type === 'toolCall');
+    const toolCalls = finalMessage.content.filter(b => b.type === 'toolCall');
 
-//     if (toolCalls.length > 0) {
-//       expect(toolCallEvents.length).toBeGreaterThan(0);
+    if (toolCalls.length > 0) {
+      expect(toolCallEvents.length).toBeGreaterThan(0);
 
-//       // 验证事件顺序
-//       const startEvents = toolCallEvents.filter(e => e.type === 'toolcall_start');
-//       const endEvents = toolCallEvents.filter(e => e.type === 'toolcall_end');
+      // 验证事件顺序
+      const startEvents = toolCallEvents.filter(e => e.type === 'toolcall_start');
+      const endEvents = toolCallEvents.filter(e => e.type === 'toolcall_end');
 
-//       expect(startEvents.length).toBeGreaterThan(0);
-//       expect(endEvents.length).toBeGreaterThan(0);
-//     }
-//   });
-// });
+      expect(startEvents.length).toBeGreaterThan(0);
+      expect(endEvents.length).toBeGreaterThan(0);
+    }
+  });
+});
 
 // describe('Error handling', () => {
 //   test('should handle invalid model', () => {
